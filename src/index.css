@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-appbg text-navy-dark font-sans antialiased;
+  }
+  /* Hilangkan tap highlight biru bawaan mobile agar terasa seperti app */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  /* Sembunyikan scrollbar pada baris chip kategori yang bisa di-scroll horizontal */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  /* Aman dari notch / home indicator pada iPhone */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
