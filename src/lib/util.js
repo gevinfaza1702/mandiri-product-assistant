@@ -31,3 +31,26 @@ export function formatWaktu(tanggal) {
     minute: '2-digit',
   }).format(tanggal)
 }
+
+// Unduh data tabular (array of object) sebagai file CSV.
+export function unduhCsv(namaFile, baris, kolom) {
+  const escape = (nilai) => {
+    const teks = nilai === null || nilai === undefined ? '' : String(nilai)
+    if (/[",\n]/.test(teks)) return `"${teks.replace(/"/g, '""')}"`
+    return teks
+  }
+
+  const header = kolom.map((k) => escape(k.label)).join(',')
+  const isi = baris.map((row) => kolom.map((k) => escape(row[k.key])).join(','))
+  const csv = [header, ...isi].join('\n')
+
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = namaFile
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}

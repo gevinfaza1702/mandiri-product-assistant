@@ -78,9 +78,32 @@ export function useProspek() {
     )
   }, [])
 
+  const ubahProspek = useCallback((id, data) => {
+    setProspek((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              nama: data.nama?.trim() || p.nama,
+              hp: data.hp?.trim() ?? p.hp,
+              kebutuhan: data.kebutuhan?.trim() ?? p.kebutuhan,
+              produkId: data.produkId ?? p.produkId,
+              picWa: data.picWa ?? p.picWa,
+              picNama: data.picNama ?? p.picNama,
+              picJabatan: data.picJabatan ?? p.picJabatan,
+              tanggalFollowUp: data.tanggalFollowUp ?? p.tanggalFollowUp,
+              status: normalisasiStatus(data.status ?? p.status),
+              catatan: data.catatan?.trim() ?? p.catatan,
+              diubahPada: new Date().toISOString(),
+            }
+          : p,
+      ),
+    )
+  }, [])
+
   const hapusProspek = useCallback((id) => {
     setProspek((prev) => prev.filter((p) => p.id !== id))
   }, [])
 
-  return { prospek, tambahProspek, ubahStatus, hapusProspek }
+  return { prospek, tambahProspek, ubahStatus, ubahProspek, hapusProspek }
 }

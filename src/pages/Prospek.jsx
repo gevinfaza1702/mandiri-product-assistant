@@ -7,17 +7,21 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock3,
+  Download,
   Filter,
   MessageCircle,
+  Pencil,
   Phone,
   Plus,
   Target,
   Trash2,
   UserRound,
   UsersRound,
+  X,
 } from 'lucide-react'
 import { useProduk } from '../lib/ProdukContext.jsx'
 import { STATUS_PROSPEK, isStatusSelesai, labelStatus, useProspek } from '../lib/prospek.js'
+import { unduhCsv } from '../lib/util.js'
 import Header from '../components/Header.jsx'
 import Loading from '../components/Loading.jsx'
 import DataFooter from '../components/DataFooter.jsx'
@@ -173,10 +177,10 @@ function RingkasanKartu({ icon: Icon, label, value, helper, tone = 'navy' }) {
 
 export default function Prospek() {
   const { produk, loading } = useProduk()
-  const { prospek, tambahProspek, ubahStatus, hapusProspek } = useProspek()
+  const { prospek, tambahProspek, ubahStatus, ubahProspek, hapusProspek } = useProspek()
   const [searchParams] = useSearchParams()
   const produkAwal = searchParams.get('produk') || ''
-  const [form, setForm] = useState({
+  const formKosong = {
     nama: '',
     hp: '',
     kebutuhan: '',
@@ -185,7 +189,9 @@ export default function Prospek() {
     tanggalFollowUp: tanggalHariIni(),
     status: 'baru',
     catatan: '',
-  })
+  }
+  const [form, setForm] = useState(formKosong)
+  const [editId, setEditId] = useState(null)
   const [filter, setFilter] = useState({
     picWa: '',
     tanggal: '',
@@ -280,22 +286,67 @@ export default function Prospek() {
     e.preventDefault()
     const p = produkById.get(form.produkId)
     const pic = daftarPic.find((x) => x.wa === form.picWa)
-    tambahProspek({
-      ...form,
+    const dataPic = {
       picWa: form.picWa || p?.pic_wa || '',
       picNama: pic?.nama || p?.pic_nama || '',
       picJabatan: pic?.jabatan || p?.pic_jabatan || '',
-    })
+    }
+    if (editId) {
+      ubahProspek(editId, { ...form, ...dataPic })
+      setEditId(null)
+    } else {
+      tambahProspek({ ...form, ...dataPic })
+    }
+    setForm(formKosong)
+  }
+
+  const mulaiEdit = (item) => {
+    setEditId(item.id)
     setForm({
-      nama: '',
-      hp: '',
-      kebutuhan: '',
-      produkId: produkAwal,
-      picWa: '',
-      tanggalFollowUp: tanggalHariIni(),
-      status: 'baru',
-      catatan: '',
+      nama: item.nama || '',
+      hp: item.hp || '',
+      kebutuhan: item.kebutuhan || '',
+      produkId: item.produkId || '',
+      picWa: item.picWa || '',
+      tanggalFollowUp: item.tanggalFollowUp || tanggalHariIni(),
+      status: item.status || 'baru',
+      catatan: item.catatan || '',
     })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const batalEdit = () => {
+    setEditId(null)
+    setForm(formKosong)
+  }
+
+  const exportCsv = () => {
+    const kolom = [
+      { key: 'nama', label: 'Nama Nasabah' },
+      { key: 'hp', label: 'No HP' },
+      { key: 'produk', label: 'Produk Diminati' },
+      { key: 'kebutuhan', label: 'Kebutuhan' },
+      { key: 'pic', label: 'PIC' },
+      { key: 'status', label: 'Status' },
+      { key: 'tanggalFollowUp', label: 'Tanggal Follow-up' },
+      { key: 'catatan', label: 'Catatan' },
+      { key: 'dibuatPada', label: 'Dicatat Pada' },
+    ]
+    const baris = prospekTampil.map((item) => {
+      const p = produkById.get(item.produkId)
+      return {
+        nama: item.nama,
+        hp: item.hp,
+        produk: p?.nama_produk || '',
+        kebutuhan: item.kebutuhan,
+        pic: item.picNama || p?.pic_nama || '',
+        status: labelStatus(item.status),
+        tanggalFollowUp: formatTanggal(item.tanggalFollowUp),
+        catatan: item.catatan,
+        dibuatPada: formatTanggal(item.dibuatPada),
+      }
+    })
+    unduhCsv(`prospek-${tanggalHariIni()}.csv`, baris, kolom)
   }
 
   return (
@@ -314,10 +365,12 @@ export default function Prospek() {
             <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:sticky lg:top-20">
               <div className="mb-4 flex items-center gap-2">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/15 text-navy">
-                  <Plus size={18} />
+                  {editId ? <Pencil size={18} /> : <Plus size={18} />}
                 </span>
                 <div>
-                  <h1 className="text-base font-extrabold text-gray-900">Simpan prospek</h1>
+                  <h1 className="text-base font-extrabold text-gray-900">
+                    {editId ? 'Edit prospek' : 'Simpan prospek'}
+                  </h1>
                   <p className="text-xs text-gray-400">Data tersimpan lokal di browser ini.</p>
                 </div>
               </div>
@@ -421,13 +474,25 @@ export default function Prospek() {
                   />
                 </Field>
 
-                <button
-                  type="submit"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-navy-dark active:scale-[0.98]"
-                >
-                  <ClipboardList size={16} />
-                  Simpan Prospek
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-navy py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-navy-dark active:scale-[0.98]"
+                  >
+                    <ClipboardList size={16} />
+                    {editId ? 'Simpan Perubahan' : 'Simpan Prospek'}
+                  </button>
+                  {editId && (
+                    <button
+                      type="button"
+                      onClick={batalEdit}
+                      className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-600 transition hover:border-red-200 hover:text-red-500"
+                    >
+                      <X size={16} />
+                      Batal
+                    </button>
+                  )}
+                </div>
               </form>
             </section>
 
@@ -544,16 +609,26 @@ export default function Prospek() {
               </div>
 
               <div className="mb-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-navy/5 text-navy">
-                    <Filter size={16} />
-                  </span>
-                  <div>
-                    <h2 className="text-sm font-extrabold text-gray-900">Filter prospek</h2>
-                    <p className="text-xs text-gray-400">
-                      {prospekTampil.length} dari {prospek.length} prospek ditampilkan
-                    </p>
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-navy/5 text-navy">
+                      <Filter size={16} />
+                    </span>
+                    <div>
+                      <h2 className="text-sm font-extrabold text-gray-900">Filter prospek</h2>
+                      <p className="text-xs text-gray-400">
+                        {prospekTampil.length} dari {prospek.length} prospek ditampilkan
+                      </p>
+                    </div>
                   </div>
+                  <button
+                    onClick={exportCsv}
+                    disabled={prospekTampil.length === 0}
+                    className="flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-navy transition hover:border-gold disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Download size={14} />
+                    Export CSV
+                  </button>
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_13rem_13rem_auto] xl:items-end">
@@ -690,6 +765,13 @@ export default function Prospek() {
                                 Telepon
                               </a>
                             )}
+                            <button
+                              onClick={() => mulaiEdit(item)}
+                              aria-label="Edit prospek"
+                              className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 text-gray-400 transition hover:border-gold hover:text-navy"
+                            >
+                              <Pencil size={15} />
+                            </button>
                             <button
                               onClick={() => hapusProspek(item.id)}
                               aria-label="Hapus prospek"
