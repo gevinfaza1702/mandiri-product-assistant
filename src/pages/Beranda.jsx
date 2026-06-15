@@ -206,6 +206,9 @@ export default function Beranda() {
               key={src}
               src={src}
               alt="Bank Mandiri Banner"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              fetchPriority={i === 0 ? 'high' : 'low'}
               className={`absolute inset-0 h-full w-full object-cover object-[62%_center] transition-opacity duration-1000 lg:object-center ${
                 i === banner ? 'opacity-100' : 'opacity-0'
               }`}
