@@ -365,9 +365,16 @@ export default function Beranda() {
                 href={EKSPLORASI.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex min-h-[12rem] flex-col justify-between rounded-2xl bg-navy p-6 text-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:bg-navy-dark hover:shadow-lg sm:p-7"
+                className="group relative flex min-h-[12rem] flex-col justify-between overflow-hidden rounded-2xl bg-navy p-6 text-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:p-7"
               >
-                <div className="flex items-start justify-between gap-4">
+                <img
+                  src="/cc.png"
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/70 to-navy/10" />
+
+                <div className="relative flex items-start justify-between gap-4">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-gold">
                     <Icon name="CreditCard" size={22} />
                   </span>
@@ -375,7 +382,7 @@ export default function Beranda() {
                     <ExternalLink size={16} />
                   </span>
                 </div>
-                <div className="mt-6">
+                <div className="relative mt-6">
                   <p className="text-[10px] font-extrabold uppercase tracking-widest text-white/55">
                     {EKSPLORASI.label}
                   </p>
