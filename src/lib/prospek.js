@@ -64,6 +64,7 @@ export function useProspek() {
       tanggalFollowUp: data.tanggalFollowUp || '',
       status: normalisasiStatus(data.status),
       catatan: data.catatan?.trim() || '',
+      nominal: data.nominal || '',
       dibuatPada: new Date().toISOString(),
     }
     setProspek((prev) => [baru, ...prev])
@@ -94,6 +95,7 @@ export function useProspek() {
               tanggalFollowUp: data.tanggalFollowUp ?? p.tanggalFollowUp,
               status: normalisasiStatus(data.status ?? p.status),
               catatan: data.catatan?.trim() ?? p.catatan,
+              nominal: data.nominal ?? p.nominal,
               diubahPada: new Date().toISOString(),
             }
           : p,

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { useProduk } from '../lib/ProdukContext.jsx'
 import { STATUS_PROSPEK, isStatusSelesai, labelStatus, useProspek } from '../lib/prospek.js'
-import { unduhCsv } from '../lib/util.js'
+import { formatRupiah, unduhCsv } from '../lib/util.js'
 import Header from '../components/Header.jsx'
 import Loading from '../components/Loading.jsx'
 import DataFooter from '../components/DataFooter.jsx'
@@ -189,6 +189,7 @@ export default function Prospek() {
     tanggalFollowUp: tanggalHariIni(),
     status: 'baru',
     catatan: '',
+    nominal: '',
   }
   const [form, setForm] = useState(formKosong)
   const [editId, setEditId] = useState(null)
@@ -226,19 +227,18 @@ export default function Prospek() {
     }
   }, [form.produkId, form.picWa, produkById])
 
-  const prospekTampil = useMemo(
-    () =>
-      prospek.filter((item) => {
-        const p = produkById.get(item.produkId)
-        const picWa = item.picWa || p?.pic_wa || ''
-        const tanggal = item.tanggalFollowUp || item.dibuatPada?.slice(0, 10) || ''
-        const cocokPic = !filter.picWa || picWa === filter.picWa
-        const cocokTanggal = !filter.tanggal || tanggal === filter.tanggal
-        const cocokStatus = !filter.status || item.status === filter.status
-        return cocokPic && cocokTanggal && cocokStatus
-      }),
-    [filter.picWa, filter.status, filter.tanggal, produkById, prospek],
-  )
+  const prospekTampil = useMemo(() => {
+    if (!filter.picWa) return []
+    return prospek.filter((item) => {
+      const p = produkById.get(item.produkId)
+      const picWa = item.picWa || p?.pic_wa || ''
+      const tanggal = item.tanggalFollowUp || item.dibuatPada?.slice(0, 10) || ''
+      const cocokPic = filter.picWa === 'semua' || picWa === filter.picWa
+      const cocokTanggal = !filter.tanggal || tanggal === filter.tanggal
+      const cocokStatus = !filter.status || item.status === filter.status
+      return cocokPic && cocokTanggal && cocokStatus
+    })
+  }, [filter.picWa, filter.status, filter.tanggal, produkById, prospek])
 
   const dashboard = useMemo(() => {
     const statusCounts = STATUS_PROSPEK.map((s) => ({
@@ -311,6 +311,7 @@ export default function Prospek() {
       tanggalFollowUp: item.tanggalFollowUp || tanggalHariIni(),
       status: item.status || 'baru',
       catatan: item.catatan || '',
+      nominal: item.nominal || '',
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -329,6 +330,7 @@ export default function Prospek() {
       { key: 'pic', label: 'PIC' },
       { key: 'status', label: 'Status' },
       { key: 'tanggalFollowUp', label: 'Tanggal Follow-up' },
+      { key: 'nominal', label: 'Perkiraan Nominal' },
       { key: 'catatan', label: 'Catatan' },
       { key: 'dibuatPada', label: 'Dicatat Pada' },
     ]
@@ -342,6 +344,7 @@ export default function Prospek() {
         pic: item.picNama || p?.pic_nama || '',
         status: labelStatus(item.status),
         tanggalFollowUp: formatTanggal(item.tanggalFollowUp),
+        nominal: formatRupiah(item.nominal),
         catatan: item.catatan,
         dibuatPada: formatTanggal(item.dibuatPada),
       }
@@ -446,6 +449,18 @@ export default function Prospek() {
                     onChange={(e) => ubah({ kebutuhan: e.target.value })}
                     placeholder="Contoh: butuh QRIS dan modal usaha"
                     rows={3}
+                    className={inputClass()}
+                  />
+                </Field>
+
+                <Field label="Perkiraan nominal kebutuhan (opsional)">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    value={form.nominal}
+                    onChange={(e) => ubah({ nominal: e.target.value })}
+                    placeholder="Contoh: 200000000"
                     className={inputClass()}
                   />
                 </Field>
@@ -617,7 +632,9 @@ export default function Prospek() {
                     <div>
                       <h2 className="text-sm font-extrabold text-gray-900">Filter prospek</h2>
                       <p className="text-xs text-gray-400">
-                        {prospekTampil.length} dari {prospek.length} prospek ditampilkan
+                        {filter.picWa
+                          ? `${prospekTampil.length} dari ${prospek.length} prospek ditampilkan`
+                          : 'Pilih PIC untuk menampilkan prospek'}
                       </p>
                     </div>
                   </div>
@@ -638,7 +655,10 @@ export default function Prospek() {
                       onChange={(e) => setFilter((f) => ({ ...f, picWa: e.target.value }))}
                       className={inputClass()}
                     >
-                      <option value="">Semua PIC</option>
+                      <option value="" disabled>
+                        -- Pilih PIC --
+                      </option>
+                      <option value="semua">Semua PIC</option>
                       {daftarPic.map((pic) => (
                         <option key={pic.wa} value={pic.wa}>
                           {pic.nama} - {pic.jabatan}
@@ -680,7 +700,12 @@ export default function Prospek() {
                 </div>
               </div>
 
-              {prospek.length === 0 ? (
+              {!filter.picWa ? (
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white py-16 text-center text-gray-400">
+                  <UsersRound size={34} className="text-gray-200" />
+                  <p className="text-sm">Pilih PIC terlebih dahulu.</p>
+                </div>
+              ) : prospek.length === 0 ? (
                 <div className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white py-16 text-center text-gray-400">
                   <UserRound size={34} className="text-gray-200" />
                   <p className="text-sm">Belum ada prospek tersimpan.</p>
@@ -738,6 +763,11 @@ export default function Prospek() {
                                 <CalendarDays size={12} />
                                 {tanggalFollowUp ? formatTanggal(tanggalFollowUp) : 'Tanggal belum ditentukan'}
                               </span>
+                              {item.nominal && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700">
+                                  {formatRupiah(item.nominal)}
+                                </span>
+                              )}
                             </div>
                             <p className="mt-2 text-[11px] font-semibold text-gray-400">
                               {followUp.detail}

@@ -32,6 +32,13 @@ export function formatWaktu(tanggal) {
   }).format(tanggal)
 }
 
+// Format angka jadi "Rp 200.000.000". Mengembalikan '' jika kosong/invalid.
+export function formatRupiah(nominal) {
+  const angka = Number(nominal)
+  if (!nominal || Number.isNaN(angka)) return ''
+  return `Rp ${angka.toLocaleString('id-ID')}`
+}
+
 // Unduh data tabular (array of object) sebagai file CSV.
 export function unduhCsv(namaFile, baris, kolom) {
   const escape = (nilai) => {
