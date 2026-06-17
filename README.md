@@ -18,7 +18,13 @@ Kredit Retail, Payroll & Korporasi, Rekening Badan, dan Kartu Kredit.
   biaya/bunga, dan **tombol besar "Hubungi PIC" → WhatsApp** (pesan otomatis) + telepon.
 - **Mode Pitch Card** — tampilan satu layar font besar untuk diperlihatkan ke calon nasabah.
 - **Rekomendasi sederhana (rule-based)** — pilih tipe nasabah + kebutuhan → 1–3 produk cocok.
-- **Favorit** (localStorage), **catatan prospek**, **compare produk**, dan **bagikan link** produk.
+- **Catatan Prospek** — simpan calon nasabah (nama, HP, produk diminati, PIC, jadwal follow-up,
+  status pipeline, perkiraan nominal) ke **Supabase** sehingga bisa diakses lintas perangkat.
+  Dilengkapi dashboard ringkasan (overdue / follow-up hari ini / closing), filter per-PIC,
+  **flag prospek overdue otomatis**, dan **export CSV**.
+- **Asisten Produk (AI)** — chat tanya-jawab produk yang di-ground ke katalog (tanpa mengirim
+  nomor HP nasabah ke layanan AI).
+- **Favorit** (localStorage), **compare produk**, dan **bagikan link** produk.
 - **Sumber data Google Spreadsheet** (CSV) + **fallback data lokal** bila offline.
 
 ---
@@ -27,7 +33,10 @@ Kredit Retail, Payroll & Korporasi, Rekening Badan, dan Kartu Kredit.
 
 - Vite + React 18 (JavaScript, tanpa TypeScript)
 - Tailwind CSS, lucide-react (ikon), papaparse (parsing CSV), react-router-dom (navigasi)
-- Tanpa backend, tanpa login. `localStorage` hanya untuk favorit.
+- **Supabase** (`@supabase/supabase-js`) — database cloud (Postgres) untuk **Catatan Prospek**
+- **Serverless function** (Vercel) untuk endpoint **Asisten AI** `/api/chat` — API key aman di server
+- Tanpa login. Penyimpanan: `localStorage` (favorit) + Supabase (prospek). Akses data prospek
+  diatur lewat **Row Level Security** Supabase, bukan otentikasi per-pengguna.
 
 ---
 
@@ -106,6 +115,75 @@ di footer. Aplikasi **tidak pernah blank** hanya karena internet bermasalah.
 
 ---
 
+## Pencatatan Prospek (Supabase)
+
+Halaman **/prospek** menyimpan calon nasabah ke database **Supabase** (Postgres cloud),
+sehingga data bisa diakses lintas perangkat & pegawai dalam satu cabang — bukan lagi
+hanya tersimpan di satu HP. Jika Supabase belum dikonfigurasi, halaman menampilkan pesan
+konfigurasi dan halaman lain **tetap berfungsi normal**.
+
+### 1. Buat project & tabel Supabase
+
+1. Buat project gratis di [supabase.com](https://supabase.com).
+2. Buka **SQL Editor → New query**, lalu jalankan skema berikut:
+
+   ```sql
+   create table if not exists public.prospek (
+     id                uuid primary key default gen_random_uuid(),
+     nama              text not null default 'Tanpa nama',
+     hp                text default '',
+     kebutuhan         text default '',
+     produk_id         text default '',
+     pic_wa            text default '',
+     pic_nama          text default '',
+     pic_jabatan       text default '',
+     tanggal_follow_up date,
+     status            text default 'baru',
+     catatan           text default '',
+     nominal           numeric,
+     dibuat_pada       timestamptz not null default now(),
+     diubah_pada       timestamptz
+   );
+
+   create index if not exists prospek_dibuat_pada_idx
+     on public.prospek (dibuat_pada desc);
+
+   -- MODE PROTOTIPE: tanpa login, data dipakai bersama satu cabang.
+   -- anon key boleh select/insert/update/delete. Aman untuk demo internal;
+   -- untuk produksi, ganti dengan auth + policy per-user.
+   alter table public.prospek enable row level security;
+
+   drop policy if exists "prototipe akses penuh" on public.prospek;
+   create policy "prototipe akses penuh"
+     on public.prospek
+     for all
+     to anon, authenticated
+     using (true)
+     with check (true);
+   ```
+
+   > Skrip yang sama juga tersedia di `supabase/setup.sql` (folder tersebut di-gitignore).
+
+### 2. Pasang kredensial ke aplikasi
+
+Ambil **Project URL** dan **anon / publishable key** di Supabase (**Project Settings → API**),
+lalu tambahkan ke `.env.local` (lokal) **dan** Environment Variables Vercel (production):
+
+```
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=sb_publishable_xxxx
+```
+
+> Prefix `VITE_` berarti nilai ini ikut di-*bundle* ke sisi browser — itu memang desain
+> Supabase: keamanan dijaga oleh **Row Level Security**, bukan kerahasiaan anon key.
+> Variabel `VITE_` dibaca saat **build**, jadi setelah mengubahnya di Vercel perlu **redeploy**.
+
+Status pipeline yang tersedia: `Baru`, `Sudah Dihubungi`, `Follow up`, `Berminat`,
+`Tidak Berminat`, `Closing`. Prospek aktif yang melewati tanggal follow-up ditandai
+**Overdue** secara otomatis.
+
+---
+
 ## Asisten Produk (AI)
 
 Halaman **/asisten** menyediakan chat tanya-jawab bebas seputar produk. Jawaban di-ground ke
@@ -142,7 +220,10 @@ asisten menampilkan pesan fallback yang mengarahkan ke fitur Rekomendasi dan kon
    - **Framework Preset:** Vite
    - **Build Command:** `npm run build`
    - **Output Directory:** `dist`
-4. Klik **Deploy**. Aplikasi langsung online dan bisa dibuka dari HP pegawai.
+4. Tambahkan **Environment Variables** (Settings → Environment Variables):
+   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` — untuk **Catatan Prospek**.
+   - `SUMOPOD_API_KEY` (opsional `SUMOPOD_MODEL`, `SUMOPOD_BASE_URL`) — untuk **Asisten AI**.
+5. Klik **Deploy**. Aplikasi langsung online dan bisa dibuka dari HP pegawai.
 
 > Deploy ke **Netlify** juga sama: build command `npm run build`, publish directory `dist`.
 > Aplikasi memakai HashRouter sehingga deep-link (mis. `#/produk/qris-mandiri`) tetap jalan
@@ -153,10 +234,12 @@ asisten menampilkan pesan fallback yang mengarahkan ke fitur Rekomendasi dan kon
 ## Struktur proyek
 
 ```
+api/              # serverless function Vercel: chat.js (endpoint Asisten AI) + _core.js
+supabase/         # setup.sql (skema tabel prospek) — gitignored
 src/
 ├── components/   # komponen UI (Header, SearchBar, ProdukCard, PitchCard, dll.)
 ├── pages/        # halaman (Beranda, Kategori, Detail, Rekomendasi, Favorit, Prospek, Compare, Asisten)
-├── lib/          # logika (parsing CSV, rekomendasi, favorit, util WA)
+├── lib/          # logika: produk (CSV), rekomendasi, prospek (Supabase), asisten (AI), favorit, pitch, util
 ├── data/         # produk-fallback.json (data lokal offline)
 └── config/       # config.js (SHEET_CSV_URL, kategori, dll.)
 ```
@@ -168,6 +251,8 @@ src/
 - Semua data PIC/produk pada `produk-fallback.json` adalah **dummy**, bukan data asli.
 - Aturan rekomendasi ditulis transparan di [`src/lib/rekomendasi.js`](src/lib/rekomendasi.js)
   (rule-based, **bukan AI**) agar mudah dijelaskan.
+- Data **prospek** berisi data nasabah asli dan disimpan di Supabase. Asisten AI **tidak
+  pernah menerima nomor HP nasabah** — hanya nama, produk, PIC, status, jadwal, dan catatan.
 
 ---
 
