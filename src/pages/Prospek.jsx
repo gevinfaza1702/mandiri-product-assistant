@@ -177,7 +177,15 @@ function RingkasanKartu({ icon: Icon, label, value, helper, tone = 'navy' }) {
 
 export default function Prospek() {
   const { produk, loading } = useProduk()
-  const { prospek, tambahProspek, ubahStatus, ubahProspek, hapusProspek } = useProspek()
+  const {
+    prospek,
+    loading: loadingProspek,
+    error: errorProspek,
+    tambahProspek,
+    ubahStatus,
+    ubahProspek,
+    hapusProspek,
+  } = useProspek()
   const [searchParams] = useSearchParams()
   const produkAwal = searchParams.get('produk') || ''
   const formKosong = {
@@ -282,7 +290,9 @@ export default function Prospek() {
 
   const ubah = (patch) => setForm((f) => ({ ...f, ...patch }))
 
-  const submit = (e) => {
+  const [menyimpan, setMenyimpan] = useState(false)
+
+  const submit = async (e) => {
     e.preventDefault()
     const p = produkById.get(form.produkId)
     const pic = daftarPic.find((x) => x.wa === form.picWa)
@@ -291,12 +301,14 @@ export default function Prospek() {
       picNama: pic?.nama || p?.pic_nama || '',
       picJabatan: pic?.jabatan || p?.pic_jabatan || '',
     }
+    setMenyimpan(true)
     if (editId) {
-      ubahProspek(editId, { ...form, ...dataPic })
+      await ubahProspek(editId, { ...form, ...dataPic })
       setEditId(null)
     } else {
-      tambahProspek({ ...form, ...dataPic })
+      await tambahProspek({ ...form, ...dataPic })
     }
+    setMenyimpan(false)
     setForm(formKosong)
   }
 
@@ -492,10 +504,11 @@ export default function Prospek() {
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-navy py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-navy-dark active:scale-[0.98]"
+                    disabled={menyimpan}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-navy py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-navy-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <ClipboardList size={16} />
-                    {editId ? 'Simpan Perubahan' : 'Simpan Prospek'}
+                    {menyimpan ? 'Menyimpan…' : editId ? 'Simpan Perubahan' : 'Simpan Prospek'}
                   </button>
                   {editId && (
                     <button
@@ -700,7 +713,18 @@ export default function Prospek() {
                 </div>
               </div>
 
-              {!filter.picWa ? (
+              {errorProspek ? (
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-red-100 bg-red-50 py-16 text-center text-red-600">
+                  <AlertTriangle size={34} className="text-red-300" />
+                  <p className="text-sm font-bold">Gagal memuat data prospek.</p>
+                  <p className="max-w-md text-xs text-red-400">{errorProspek}</p>
+                </div>
+              ) : loadingProspek ? (
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white py-16 text-center text-gray-400">
+                  <Clock3 size={34} className="animate-pulse text-gray-200" />
+                  <p className="text-sm">Memuat data prospek…</p>
+                </div>
+              ) : !filter.picWa ? (
                 <div className="flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white py-16 text-center text-gray-400">
                   <UsersRound size={34} className="text-gray-200" />
                   <p className="text-sm">Pilih PIC terlebih dahulu.</p>
