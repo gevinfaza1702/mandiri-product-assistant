@@ -79,13 +79,14 @@ function aturanRekomendasi({
 }) {
   if (kategori === 'pribadi') {
     if (tujuan.startsWith('Menabung')) {
-      // Sudah punya rekening -> arahkan ke kanal & produk pelengkap dulu.
+      // Sudah punya rekening -> tawarkan tabungan rencana untuk tujuan jangka panjang.
       return punyaRekening
-        ? ['livin by mandiri', 'e-money', 'tabungan now']
-        : ['tabungan now', 'livin by mandiri', 'e-money']
+        ? ['tabungan rencana', 'livin by mandiri', 'e-money']
+        : ['tabungan now', 'tabungan rencana', 'livin by mandiri']
     }
     if (tujuan.startsWith('Tabungan Anak')) {
-      return ['simpel', 'tabungan now']
+      // Menabung untuk masa depan anak -> SimPel (rekening anak) + MTR (dana terencana ortu).
+      return ['simpel', 'tabungan rencana', 'tabungan now']
     }
     if (tujuan.startsWith('Kartu Kredit')) {
       // Penghasilan tinggi membuka kartu dengan limit & benefit lebih besar.

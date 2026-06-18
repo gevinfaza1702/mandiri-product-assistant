@@ -118,6 +118,34 @@ export function buatPanduanPitch(produk) {
     }
   }
 
+  // PENTING: cek "tabungan rencana" SEBELUM "mandiri tabungan",
+  // karena nama MTR juga mengandung kata "mandiri tabungan".
+  // MTR adalah tabungan BERJANGKA (terkunci) — bukan rekening transaksi harian.
+  if (punya(produk, 'tabungan rencana')) {
+    return {
+      pembuka:
+        'Pak/Bu, kalau ingin menabung disiplin untuk tujuan tertentu (pendidikan anak, ibadah, dana pensiun), Mandiri Tabungan Rencana menyisihkan dana otomatis tiap bulan lewat autodebet, plus perlindungan asuransi gratis.',
+      caraMenawarkan: [
+        'Tegaskan ini tabungan BERJANGKA: dana disetor rutin tiap bulan dan baru bisa diambil saat jatuh tempo, jadi benar-benar untuk menabung jangka panjang — bukan rekening transaksi harian.',
+        'Pastikan nasabah sudah punya rekening sumber (Mandiri Tabungan atau Giro) untuk autodebet.',
+        'Bantu nasabah menentukan tujuan, setoran bulanan (mulai Rp100.000), dan jangka waktu (1–20 tahun).',
+      ],
+      keberatan: [
+        {
+          tanya: 'Nasabah ingin dananya bisa diambil sewaktu-waktu.',
+          jawab:
+            'Jujur sampaikan bahwa MTR memang dikunci sampai jatuh tempo — justru itu kelebihannya agar tabungan tidak terpakai. Kalau nasabah butuh dana fleksibel, arahkan ke Mandiri Tabungan biasa.',
+        },
+        {
+          tanya: 'Nasabah khawatir tidak sanggup setor rutin.',
+          jawab:
+            'Jelaskan setoran bisa dimulai dari Rp100.000 dan diubah sesuai kemampuan. Ingatkan bila gagal autodebet 3 kali berturut-turut, rekening MTR otomatis ditutup.',
+        },
+      ],
+      crossSellKeywords: ['tabungan now', 'livin by mandiri'],
+    }
+  }
+
   if (punya(produk, 'tabungan now') || punya(produk, 'mandiri tabungan')) {
     return {
       pembuka:

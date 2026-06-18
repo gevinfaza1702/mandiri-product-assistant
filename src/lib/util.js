@@ -39,25 +39,37 @@ export function formatRupiah(nominal) {
   return `Rp ${angka.toLocaleString('id-ID')}`
 }
 
-// Unduh data tabular (array of object) sebagai file CSV.
-export function unduhCsv(namaFile, baris, kolom) {
-  const escape = (nilai) => {
-    const teks = nilai === null || nilai === undefined ? '' : String(nilai)
-    if (/[",\n]/.test(teks)) return `"${teks.replace(/"/g, '""')}"`
-    return teks
-  }
+// Unduh data tabular (array of object) sebagai file Excel (.xlsx).
+//   namaFile : nama file unduhan (mis. "prospek-2026-06-18.xlsx")
+//   baris    : array objek data
+//   kolom    : array { key, label } — label jadi header, key mengambil nilai
+//   namaSheet: nama tab sheet (opsional)
+// Library xlsx di-import dinamis (lazy) agar tidak membebani bundle awal —
+// hanya diunduh browser saat fitur export benar-benar dipakai.
+export async function unduhExcel(namaFile, baris, kolom, namaSheet = 'Data') {
+  const XLSX = await import('xlsx')
 
-  const header = kolom.map((k) => escape(k.label)).join(',')
-  const isi = baris.map((row) => kolom.map((k) => escape(row[k.key])).join(','))
-  const csv = [header, ...isi].join('\n')
+  // Susun array-of-array: baris pertama header, sisanya isi.
+  const aoa = [
+    kolom.map((k) => k.label),
+    ...baris.map((row) =>
+      kolom.map((k) => {
+        const v = row[k.key]
+        return v === null || v === undefined ? '' : v
+      }),
+    ),
+  ]
 
-  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = namaFile
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  const ws = XLSX.utils.aoa_to_sheet(aoa)
+
+  // Lebar kolom otomatis: ikuti teks terpanjang (header atau isi), dibatasi.
+  ws['!cols'] = kolom.map((k) => {
+    const panjangIsi = baris.map((row) => String(row[k.key] ?? '').length)
+    const maks = Math.max(k.label.length, ...panjangIsi, 8)
+    return { wch: Math.min(maks + 2, 50) }
+  })
+
+  const wb = XLSX.utils.book_new()
+  XLSX.utils.book_append_sheet(wb, ws, namaSheet)
+  XLSX.writeFile(wb, namaFile)
 }

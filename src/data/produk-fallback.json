@@ -116,6 +116,24 @@
     "aktif": "ya"
   },
   {
+    "kategori": "Tabungan & Livin'",
+    "nama_produk": "Mandiri Tabungan Rencana (MTR)",
+    "deskripsi_singkat": "Tabungan BERJANGKA dengan setoran rutin otomatis (autodebet) tiap bulan. Dana dikunci sampai jatuh tempo (tidak bisa diambil sewaktu-waktu) dan dilengkapi perlindungan asuransi gratis — cara efektif menabung disiplin untuk rencana masa depan.",
+    "target_nasabah": "Nasabah yang ingin menabung disiplin untuk tujuan jangka panjang (pendidikan anak, ibadah, dana darurat, pensiun) — termasuk pengusaha yang ingin membukakan tabungan rencana untuk karyawannya.",
+    "kegunaan": "Menabung disiplin untuk tujuan masa depan|Dana pendidikan anak|Persiapan ibadah / pernikahan|Dana darurat & persiapan pensiun|Tabungan rencana untuk karyawan (dibuka pengusaha)",
+    "benefit": "Bebas biaya administrasi|Dana terkunci hingga jatuh tempo sehingga tabungan tidak mudah terpakai|Fasilitas autodebet dari rekening sumber tiap bulan|Setoran bulanan fleksibel mulai Rp100.000 (atau USD 10), bisa diubah kapan saja|Jangka waktu fleksibel 1 sampai 20 tahun|Perlindungan asuransi gratis (kerja sama AXA Mandiri) hingga Rp5 juta/bulan per rekening|Suku bunga di atas suku bunga tertinggi Mandiri Tabungan|Tersedia dalam mata uang Rupiah dan US Dollar",
+    "syarat_utama": "Penabung berusia minimal 18 tahun dan maksimal 70 tahun saat MTR jatuh tempo|Memiliki rekening sumber Mandiri Tabungan atau Mandiri Giro|Mengisi formulir aplikasi pembukaan beserta pernyataan kesehatan dan surat kuasa pendebitan otomatis|Tanpa perlu medical check-up|Setoran bulanan minimal Rp100.000 atau USD 10|Jika setoran rutin gagal 3 kali, rekening MTR otomatis ditutup oleh sistem",
+    "cara_pengajuan": "Pastikan sudah memiliki rekening sumber (Mandiri Tabungan atau Mandiri Giro)|Kunjungi cabang Bank Mandiri (KCP Sunter Permai) dan temui Customer Service|Isi formulir aplikasi MTR, pernyataan kesehatan, dan surat kuasa autodebet|Tentukan setoran bulanan dan jangka waktu, lalu rekening MTR aktif dengan perlindungan asuransi otomatis",
+    "highlight": "Menabung otomatis & terkunci sampai jatuh tempo + asuransi gratis — bukan rekening transaksi harian.",
+    "biaya_bunga": "Bebas biaya admin. Setoran bulanan mulai Rp100.000 (atau USD 10), jangka waktu 1-20 tahun. Suku bunga di atas suku bunga tertinggi Mandiri Tabungan. Perlindungan asuransi gratis hingga Rp5 juta/bulan per rekening. Verifikasi detail terbaru ke CSO.",
+    "pic_nama": "Dewi",
+    "pic_jabatan": "Customer Service Officer",
+    "pic_wa": "6281200000002",
+    "pic_telp": "0211500002",
+    "prioritas": "5",
+    "aktif": "ya"
+  },
+  {
     "kategori": "Kredit UMKM",
     "nama_produk": "KUR (Kredit Usaha Rakyat)",
     "deskripsi_singkat": "Kredit modal kerja atau investasi bersubsidi pemerintah untuk usaha mikro-kecil. Pilihan pas untuk usaha yang ingin tambah stok, alat, atau kapasitas.",

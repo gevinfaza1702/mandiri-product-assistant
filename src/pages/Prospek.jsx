@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { useProduk } from '../lib/ProdukContext.jsx'
 import { STATUS_PROSPEK, isStatusSelesai, labelStatus, useProspek } from '../lib/prospek.js'
-import { formatRupiah, unduhCsv } from '../lib/util.js'
+import { formatRupiah, unduhExcel } from '../lib/util.js'
 import Header from '../components/Header.jsx'
 import Loading from '../components/Loading.jsx'
 import DataFooter from '../components/DataFooter.jsx'
@@ -333,7 +333,9 @@ export default function Prospek() {
     setForm(formKosong)
   }
 
-  const exportCsv = () => {
+  const [mengekspor, setMengekspor] = useState(false)
+
+  const exportExcel = async () => {
     const kolom = [
       { key: 'nama', label: 'Nama Nasabah' },
       { key: 'hp', label: 'No HP' },
@@ -361,7 +363,12 @@ export default function Prospek() {
         dibuatPada: formatTanggal(item.dibuatPada),
       }
     })
-    unduhCsv(`prospek-${tanggalHariIni()}.csv`, baris, kolom)
+    setMengekspor(true)
+    try {
+      await unduhExcel(`prospek-${tanggalHariIni()}.xlsx`, baris, kolom, 'Prospek')
+    } finally {
+      setMengekspor(false)
+    }
   }
 
   return (
@@ -652,12 +659,12 @@ export default function Prospek() {
                     </div>
                   </div>
                   <button
-                    onClick={exportCsv}
-                    disabled={prospekTampil.length === 0}
+                    onClick={exportExcel}
+                    disabled={prospekTampil.length === 0 || mengekspor}
                     className="flex shrink-0 items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-navy transition hover:border-gold disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <Download size={14} />
-                    Export CSV
+                    {mengekspor ? 'Menyiapkan…' : 'Export Excel'}
                   </button>
                 </div>
 
