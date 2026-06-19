@@ -9,7 +9,7 @@
 //
 // Contoh format URL:
 // https://docs.google.com/spreadsheets/d/e/XXXXXXXX/pub?gid=0&single=true&output=csv
-export const SHEET_CSV_URL = ''
+export const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQkM9MNvxzDmj9psN3AjymPG9sp4SICc6mHiAF2DXvb56HD2NjgY2C363FZuTEi5gTmHwtAsi4SB_OG/pub?gid=98676883&single=true&output=csv'
 
 // Identitas pegawai yang dipakai pada template pesan WhatsApp ke PIC.
 // Ganti sesuai nama pegawai (atau nanti bisa dibuat input — lihat README).
